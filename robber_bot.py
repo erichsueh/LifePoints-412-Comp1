@@ -8,6 +8,7 @@ from sensor_msgs.msg import LaserScan
 import numpy as np
 import random
 import math
+from sensor_msgs.msg import Joy
 
 def joy_callback(msg):
     global started
@@ -58,6 +59,14 @@ def calcx(turn):
 def scan_callback(msg):
     global g_range_ahead
     g_range_ahead = msg.ranges[len(msg.ranges)/2]
+    
+    g_side_ahead = 0
+    while(math.isnan(msg.ranges[g_side_ahead])):
+        g_side_ahead = g_side_ahead + 1
+
+    if(msg.ranges[g_side_ahead] < 0.8):
+        move(.8,1)
+        
     print("the range ahead is: ", g_range_ahead)
     
 class HardTurn(smach.State):
@@ -109,7 +118,7 @@ class Forward(smach.State):
         cmd_vel_pub.publish(twist)
         '''
         
-        move(.8,-.5)
+        move(.8,-.2)
         rate.sleep()
         if(g_range_ahead < .7):
             return 'HardTurn'
@@ -138,7 +147,7 @@ class Turning(smach.State):
         twist.angular.z = .5
         cmd_vel_pub.publish(twist)
         '''
-        move(.4,1)
+        move(.6,1.5)
         rate.sleep()
         if(g_range_ahead < .7):
             return 'HardTurn'
@@ -172,6 +181,8 @@ def main():
     global rate
     global currx
     global currz
+    global started
+    started = False
     currx = 0
     currz = 0
     g_range_ahead = 1

@@ -9,18 +9,27 @@ import numpy as np
 import random
 import math
 
+def joy_callback(msg):
+    global started
+    if(msg.buttons[2]==1):
+        started = True
+    elif(msg.buttons[1]==True):
+        started = False
+
 def move(forward,turn):
     #print("the forward/turn are:",forward,turn)
     global cmd_vel_pub
     global currx
     global currz
+    global started
     twist = Twist()
-    newx= calcx(forward)
-    newz = calcz(turn)
-    #print("newx and newz are:",newx,newz)
-    twist.linear.x = newx
-    twist.angular.z = newz
-    cmd_vel_pub.publish(twist)
+    if started == True:
+        newx= calcx(forward)
+        newz = calcz(turn)
+        #print("newx and newz are:",newx,newz)
+        twist.linear.x = newx
+        twist.angular.z = newz
+        cmd_vel_pub.publish(twist)
 
 def calcz(forward):
     global currx
@@ -91,6 +100,7 @@ class Forward(smach.State):
         global state_change_time
         global driving_forward
         global rate
+        
         rospy.loginfo('Executing state Forward')
         '''
         twist = Twist()
@@ -98,6 +108,7 @@ class Forward(smach.State):
         twist.angular.z = 0
         cmd_vel_pub.publish(twist)
         '''
+        
         move(.8,-.5)
         rate.sleep()
         if(g_range_ahead < .7):
@@ -164,6 +175,7 @@ def main():
     currx = 0
     currz = 0
     g_range_ahead = 1
+    joy_sub = rospy.Subscriber('joy',Joy, joy_callback)
     scan_sub = rospy.Subscriber('scan', LaserScan, scan_callback)
     global cmd_vel_pub
     cmd_vel_pub = rospy.Publisher('cmd_vel_mux/input/teleop', Twist, queue_size=1)

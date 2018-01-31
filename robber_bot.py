@@ -10,37 +10,46 @@ import random
 import math
 
 def move(forward,turn):
+    #print("the forward/turn are:",forward,turn)
     global cmd_vel_pub
+    global currx
+    global currz
     twist = Twist()
-    newx = calcx(foward)
+    newx= calcx(forward)
     newz = calcz(turn)
-    #print(newx,newz)
+    #print("newx and newz are:",newx,newz)
     twist.linear.x = newx
-    twist.angularz = newz
+    twist.angular.z = newz
     cmd_vel_pub.publish(twist)
 
 def calcz(forward):
     global currx
-    if (currx <= forward):
-        return(currx + 0.1)
-    elif(currx >= forward):
-        return(currx - 0.1)
+    #print("the fwd and curr x are: ",forward,currx)
+    if (currx < forward):
+        currx += 0.1
+        return(currx)
+    elif(currx > forward):
+        currx -= 0.1
+        return(currx)
     else:
         return(forward)
 
 def calcx(turn):
     global currz
-    if (currz <= turn):
-        return(currz + 0.1)
-    elif(currz >= turn):
-        return(currz - 0.1)
+    #print("the turn and curr z are: ",turn,currz)
+    if (currz < turn):
+        currz +=0.1
+        return(currz)
+    elif(currz > turn):
+        currz -=0.1
+        return(currz)
     else:
         return(turn)
 
 def scan_callback(msg):
     global g_range_ahead
     g_range_ahead = msg.ranges[len(msg.ranges)/2]
-    print g_range_ahead
+    print("the range ahead is: ", g_range_ahead)
     
 class HardTurn(smach.State):
     def __init__(self):
@@ -61,11 +70,12 @@ class HardTurn(smach.State):
         '''
         move(0,1)
         rate.sleep()
+        print(g_range_ahead)
         if(g_range_ahead < 2 or rospy.Time.now() > state_change_time):
             driving_forward = False
             state_change_time = rospy.Time.now() + rospy.Duration(2)
             return 'Turning'
-        elif(g_range_ahead < 1):
+        elif(g_range_ahead < 1.5):
             return 'HardTurn'
         else:
             return 'Forward'
@@ -88,13 +98,13 @@ class Forward(smach.State):
         twist.angular.z = 0
         cmd_vel_pub.publish(twist)
         '''
-        move(1,0)
+        move(.7,0)
         rate.sleep()
         if(g_range_ahead < 2 or rospy.Time.now() > state_change_time):
             driving_forward = False
             state_change_time = rospy.Time.now() + rospy.Duration(2)
             return 'Turning'
-        elif(g_range_ahead < .7):
+        elif(g_range_ahead < 1.5):
             return 'HardTurn'
         else:
             return 'Forward'
@@ -117,13 +127,13 @@ class Turning(smach.State):
         twist.angular.z = .5
         cmd_vel_pub.publish(twist)
         '''
-        move(1,.5)
+        move(.5,1)
         rate.sleep()
         if(g_range_ahead < 2 or rospy.Time.now() > state_change_time):
             driving_forward = False
             state_change_time = rospy.Time.now() + rospy.Duration(2)
             return 'Turning'
-        elif(g_range_ahead < .7):
+        elif(g_range_ahead < 1.5):
             return 'HardTurn'
         else:
             return 'Forward'
@@ -145,6 +155,7 @@ def main():
     sis = smach_ros.IntrospectionServer('wanderSM', sm, '/SM_ROOT')
     sis.start()
     global g_range_ahead
+    global scan_sub
     global state_change_time
     global driving_forward
     global rate
@@ -155,7 +166,7 @@ def main():
     g_range_ahead = 1
     scan_sub = rospy.Subscriber('scan', LaserScan, scan_callback)
     global cmd_vel_pub
-    cmd_vel_pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
+    cmd_vel_pub = rospy.Publisher('cmd_vel_mux/input/teleop', Twist, queue_size=1)
     state_change_time = rospy.Time.now()
     driving_forward = True
     rate = rospy.Rate(10)

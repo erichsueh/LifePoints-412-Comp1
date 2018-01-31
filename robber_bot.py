@@ -71,12 +71,12 @@ class HardTurn(smach.State):
         move(0,1)
         rate.sleep()
         print(g_range_ahead)
-        if(g_range_ahead < 2 or rospy.Time.now() > state_change_time):
+        if(g_range_ahead < .7):
+            return 'HardTurn'
+        elif(g_range_ahead < 2 or rospy.Time.now() > state_change_time):
             driving_forward = False
             state_change_time = rospy.Time.now() + rospy.Duration(2)
             return 'Turning'
-        elif(g_range_ahead < 1.5):
-            return 'HardTurn'
         else:
             return 'Forward'
             
@@ -98,14 +98,14 @@ class Forward(smach.State):
         twist.angular.z = 0
         cmd_vel_pub.publish(twist)
         '''
-        move(.7,0)
+        move(.8,-.5)
         rate.sleep()
-        if(g_range_ahead < 2 or rospy.Time.now() > state_change_time):
+        if(g_range_ahead < .7):
+            return 'HardTurn'
+        elif(g_range_ahead < 2 or rospy.Time.now() > state_change_time):
             driving_forward = False
             state_change_time = rospy.Time.now() + rospy.Duration(2)
             return 'Turning'
-        elif(g_range_ahead < 1.5):
-            return 'HardTurn'
         else:
             return 'Forward'
 
@@ -127,14 +127,14 @@ class Turning(smach.State):
         twist.angular.z = .5
         cmd_vel_pub.publish(twist)
         '''
-        move(.5,1)
+        move(.4,1)
         rate.sleep()
-        if(g_range_ahead < 2 or rospy.Time.now() > state_change_time):
+        if(g_range_ahead < .7):
+            return 'HardTurn'
+        elif(g_range_ahead < 2 or rospy.Time.now() > state_change_time):
             driving_forward = False
             state_change_time = rospy.Time.now() + rospy.Duration(2)
             return 'Turning'
-        elif(g_range_ahead < 1.5):
-            return 'HardTurn'
         else:
             return 'Forward'
 

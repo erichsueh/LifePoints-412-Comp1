@@ -17,7 +17,7 @@ def joy_callback(msg):
     global started
     if(msg.buttons[2]==1):
         started = True
-        soundhandle.playWave("/home/eric/Downloads/sound_to_play.ogg")
+        soundhandle.playWave("/home/eric/cmpt412/LifePointsCompetition1/sound_to_play.ogg")
     elif(msg.buttons[1]==True):
         started = False
         soundhandle.stopAll()

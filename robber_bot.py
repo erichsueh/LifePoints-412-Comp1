@@ -9,13 +9,18 @@ import numpy as np
 import random
 import math
 from sensor_msgs.msg import Joy
+from sound_play.msg import SoundRequest
+from sound_play.libsoundplay import SoundClient
+
 
 def joy_callback(msg):
     global started
     if(msg.buttons[2]==1):
         started = True
+        soundhandle.playWave("/home/eric/Downloads/sound_to_play.ogg")
     elif(msg.buttons[1]==True):
         started = False
+        soundhandle.stopAll()
 
 def move(forward,turn):
     #print("the forward/turn are:",forward,turn)
@@ -58,6 +63,7 @@ def calcx(turn):
 
 def scan_callback(msg):
     global g_range_ahead
+    #global currx
     g_range_ahead = msg.ranges[len(msg.ranges)/2]
     
     g_side_ahead = 0
@@ -86,10 +92,10 @@ class HardTurn(smach.State):
         twist.angular.z = 1
         cmd_vel_pub.publish(twist)
         '''
-        move(0,1)
+        move(0,5)
         rate.sleep()
         print(g_range_ahead)
-        if(g_range_ahead < .7):
+        if(g_range_ahead < 1):
             return 'HardTurn'
         elif(g_range_ahead < 2 or rospy.Time.now() > state_change_time):
             driving_forward = False
@@ -118,9 +124,9 @@ class Forward(smach.State):
         cmd_vel_pub.publish(twist)
         '''
         
-        move(.8,-.2)
+        move(.8,-.3)
         rate.sleep()
-        if(g_range_ahead < .7):
+        if(g_range_ahead < 1):
             return 'HardTurn'
         elif(g_range_ahead < 2 or rospy.Time.now() > state_change_time):
             driving_forward = False
@@ -147,9 +153,9 @@ class Turning(smach.State):
         twist.angular.z = .5
         cmd_vel_pub.publish(twist)
         '''
-        move(.6,1.5)
+        move(.6,2)
         rate.sleep()
-        if(g_range_ahead < .7):
+        if(g_range_ahead < 1):
             return 'HardTurn'
         elif(g_range_ahead < 2 or rospy.Time.now() > state_change_time):
             driving_forward = False
@@ -182,6 +188,7 @@ def main():
     global currx
     global currz
     global started
+    soundhandle = SoundClient()
     started = False
     currx = 0
     currz = 0
